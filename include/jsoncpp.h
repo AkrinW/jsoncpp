@@ -1,9 +1,10 @@
 #ifndef JSONCPP_H
 #define JSONCPP_H
+
 #include <string>
+
 namespace JSON
 {
-
 enum jsonType {
     _NULL,
     _BOOLEAN,
@@ -13,16 +14,12 @@ enum jsonType {
     _OBJECT
 };
 
-struct jsonNode {
-    jsonType type;
-    std::string key;
-    int value;
-};
-
 class Json {
 private:
+    struct jsonNode;
+    jsonNode *root;
     std::string rowjson;
-    jsonNode root;
+
 public:
     Json();
     ~Json();
