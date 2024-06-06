@@ -1,3 +1,10 @@
+# 忽略 .vscode 文件夹及其内容
+/.vscode/
+/CMakeLists.txt
+/build/
+*.exe
+
+
 # Prerequisites
 *.d
 
