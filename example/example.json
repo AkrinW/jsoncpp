@@ -9,8 +9,9 @@
     ],
     "year": 2009,
     "weight": 1.8,
-    "hardcover": true,
-    "publisher": {
+    "hard\tcover": true,
+    "publisher": 
+    {
         "Company": "Pearson Education",
         "Country": "India"
     },
