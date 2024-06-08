@@ -76,8 +76,8 @@ void Json::AddNode() {
         InitNode();
         curNode = root;
     } else {
-        // curNode->map[curKey] = new jsonNode();
-        // curNode = curNode->map[curKey];
+        curNode->map[curKey] = new jsonNode();
+        curNode = std::get<jsonNode*>(curNode->map[curKey]);
     }
 }
 
@@ -163,10 +163,8 @@ void Json::Build() {
             tmp = rowjson.substr(j,i-j);
             --i;
             curNode->map[curKey] = std::stod(tmp);
-            printDouble();
         }
         ++i;
-
     }
     if (!BracketStack.empty()) {
         std::cout << "Invalid json file. (More '{')" << std::endl;

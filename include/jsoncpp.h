@@ -24,7 +24,7 @@ class Json {
 private:
     struct jsonNode;
     using Valuetype = std::variant<std::nullptr_t, std::string, bool, 
-                            double>;
+                            double, jsonNode*>;
     using jsonArrayValue = std::variant<std::nullptr_t, bool, 
                             double, std::string, jsonNode*>;
     using jsonValue = std::variant<std::nullptr_t, bool, double, std::string, 
