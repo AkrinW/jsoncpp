@@ -23,6 +23,8 @@ enum jsonType {
 class Json {
 private:
     struct jsonNode;
+    using Valuetype = std::variant<std::nullptr_t, std::string, bool, 
+                            double>;
     using jsonArrayValue = std::variant<std::nullptr_t, bool, 
                             double, std::string, jsonNode*>;
     using jsonValue = std::variant<std::nullptr_t, bool, double, std::string, 
@@ -37,6 +39,9 @@ private:
     std::stack<jsonNode*> NodeStack;//结点栈，用于读取当前结点。
 
     void InitNode();
+    void printBool();
+    void printDouble();
+    bool IfValid(std::string json);
 public:
     Json();
     ~Json();

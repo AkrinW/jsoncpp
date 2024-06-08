@@ -25,6 +25,6 @@ SET(EXECUTABLE_OUTPUT_PATH ${Home})
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src SRC_LIST)
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
-# add_executable(main ${MAIN} ${SRC_LIST})
+add_executable(main ${MAIN} ${SRC_LIST})
 
-add_executable(test ${TEST} ${SRC_LIST})
+# add_executable(test ${TEST} ${SRC_LIST})
