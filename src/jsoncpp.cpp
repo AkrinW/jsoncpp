@@ -200,6 +200,9 @@ Json::jsonValue* Json::getNextValue(int &i) {
             break;
         } else if (rowjson[i] == 'n') {
             p = new jsonValue(getNull(i));
+            if (p == nullptr) {
+                std::cout <<"jsonValue(null) == nullptr";
+            }
             break;
         } else if (rowjson[i] == '{') {
             p = new jsonValue(getObject(i));
@@ -209,6 +212,9 @@ Json::jsonValue* Json::getNextValue(int &i) {
             break;
         } else if (rowjson[i] == '[') {
             p = new jsonValue(getArray(i));
+            break;
+        } else if (rowjson[i] == ']') {
+            p = nullptr;
             break;
         }
     }
@@ -286,15 +292,16 @@ void Json::Build() {
             } else if (BracketStack.top() == ']') {//在Array里添加数据
                 if (ifgetvalue) {
                     jsonValue *p = getNextValue(i);
-                    curArray->push_back(p);
-                    // curNode->map[curKey] = p;
                     ifgetvalue = false;
-                    if (std::holds_alternative<jsonNode*>(p->value)) {
-                        curNode = NodeStack.top();
-                        ifgetkey = true;
-                    } else if (std::holds_alternative<std::vector<Json::jsonValue*>*>(p->value)) {
-                        curArray = ArrayStack.top();
-                        ifgetvalue = true;
+                    if (p != nullptr) {
+                        curArray->push_back(p);
+                        if (std::holds_alternative<jsonNode*>(p->value)) {
+                            curNode = NodeStack.top();
+                            ifgetkey = true;
+                        } else if (std::holds_alternative<std::vector<Json::jsonValue*>*>(p->value)) {
+                            curArray = ArrayStack.top();
+                            ifgetvalue = true;
+                        }
                     }
                     continue;
                 }
