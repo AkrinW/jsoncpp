@@ -23,25 +23,44 @@ enum jsonType {
 class Json {
 private:
     struct jsonNode;
+    struct jsonValue;
     using Valuetype = std::variant<std::nullptr_t, std::string, bool, 
                             double, jsonNode*>;
-    using jsonArrayValue = std::variant<std::nullptr_t, bool, 
-                            double, std::string, jsonNode*>;
-    using jsonValue = std::variant<std::nullptr_t, bool, double, std::string, 
-                            std::vector<jsonArrayValue>, jsonNode*>;
+
+    // using jsonArrayValue = std::variant<std::nullptr_t, bool, 
+    //                         double, std::string, jsonNode*>;
+    // using jsonValue = std::variant<std::nullptr_t, bool, double, std::string, 
+    //                         std::vector<jsonArrayValue>, jsonNode*>;
     std::string rowjson;
+    int rown;//rowjson's length
+    std::unordered_map<char,int> map;
+    std::list<char> list;
+
     jsonNode *root;
     std::string curKey;//指向当前的key
     jsonNode *curNode;//指向当前的node
-    std::unordered_map<char,int> map;
-    std::list<char> list;
+    std::vector<jsonValue*> *curArray;//指向当前的数组
+
     std::stack<char> BracketStack;//字符串栈
     std::stack<jsonNode*> NodeStack;//结点栈，用于读取当前结点。
-
+    std::stack<std::vector<jsonValue*>*> ArrayStack;//数组栈，用于读取当前数组。
+    
     void InitNode();
     void printBool();
     void printDouble();
+    void printString();
     bool IfValid(std::string json);
+
+    // 解析字符类型
+    std::string getNextKey(int &i);
+    jsonValue* getNextValue(int &i);
+    std::string getString(int &i);
+    double getDouble(int &i);
+    bool getBool(int &i);
+    std::nullptr_t getNull(int &i);
+    jsonNode* getObject(int &i);
+    std::vector<jsonValue*>* getArray(int &i);
+
 public:
     Json();
     ~Json();

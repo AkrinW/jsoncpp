@@ -1,0 +1,19 @@
+{
+    "title": "Design Patterns",
+    "subtitle": "Elements of Reusable Object-Oriented Software",
+    "yea'r": 2009,
+    "weight": 1.8,
+    "hard\tcover": 1.3e10,
+    "publisher": 
+    {
+        "Company":[
+            null   ,
+            true,
+            false,
+            1,
+            "s"
+        ],
+        "Country": 3}
+    ,
+    "website": null
+}
