@@ -19,14 +19,14 @@ struct VariantTypeGetter {
 
 struct Json::jsonValue {
     std::variant<std::nullptr_t, std::string, bool, 
-                double, jsonNode*, std::vector<jsonValue*>> value;
+                double, jsonNode*, std::vector<jsonValue*>*> value;
     jsonValue() {}
     jsonValue(std::nullptr_t nptr): value(nptr){}
     jsonValue(bool flag): value(flag){}
     jsonValue(std::string s): value(s){}
     jsonValue(double d): value(d){}
     jsonValue(jsonNode* n): value(n){}
-    jsonValue(std::vector<jsonValue*> v): value(v) {}
+    jsonValue(std::vector<jsonValue*>* v): value(v) {}
 };
 
 struct Json::jsonNode {
@@ -126,7 +126,8 @@ double Json::getDouble(int &i) {
     std::string tmp = "";
     int j = i;
     while (rowjson[i] != ' ' && rowjson[i] != ',' 
-            && rowjson[i] != '\n' && rowjson[i] != '}') {
+            && rowjson[i] != '\n' && rowjson[i] != '}'
+            && rowjson[i] != ']') {
        ++i;
     }
     tmp = rowjson.substr(j,i-j);
@@ -155,6 +156,14 @@ Json::jsonNode* Json::getObject(int &i) {
     return p;
 }
 
+std::vector<Json::jsonValue*>* JSON::Json::getArray(int &i) {
+    std::vector<Json::jsonValue*>* p = new std::vector<Json::jsonValue*>();
+    BracketStack.push(']');
+    ArrayStack.push(p);
+    ++i;
+    return p;
+}
+
 std::string Json::getNextKey(int &i) {
     std::string tmp = "";
     while (i < rown) {
@@ -167,18 +176,11 @@ std::string Json::getNextKey(int &i) {
         } else if (rowjson[i] == '"') {
             tmp = getString(i);
             break;
+        } else if (rowjson[i] == '}') {
+            break;
         }
     }
     return tmp;
-        // } else if (rowjson[i] == '}') {
-        //     BracketStack.pop();
-        //     NodeStack.pop();
-        //     if (NodeStack.empty()) {
-        //         curNode = nullptr;
-        //     } else {
-        //         curNode = NodeStack.top();
-        //     }
-        // }
 }
 
 Json::jsonValue* Json::getNextValue(int &i) {
@@ -205,157 +207,142 @@ Json::jsonValue* Json::getNextValue(int &i) {
         } else if (rowjson[i] == '-' || (rowjson[i] >= '0' && rowjson[i] <= '9')) {
             p = new jsonValue(getDouble(i));
             break;
+        } else if (rowjson[i] == '[') {
+            p = new jsonValue(getArray(i));
+            break;
         }
     }
     return p;
 
-    // while (i < rown) {
-    //     if (rowjson[i] == ' ') {
-    //         ++i;
-    //     } else if (rowjson[i] == '\n') {
-    //         ++i;
-    //     } else if (rowjson[i] == ':') {
-    //         ++i;
-    //     } else if (rowjson[i] == '"') {
-    //         ++i;
-    //         std::string tmp = "";
-    //         int j = i;
-    //         while (rowjson[i] != '"') {
-    //             if (rowjson[i] == '\\') {
-    //                 ++i;
-    //                 if (rowjson[i] == 'n') {
-    //                     tmp += '\n';
-    //                 } else if (rowjson[i] == 't') {
-    //                     tmp += '\t';
-    //                 } else if (rowjson[i] == '\'') {
-    //                     tmp += '\'';
-    //                 } else if (rowjson[i] == '\\') {
-    //                     tmp += '\\';
-    //                 } else if (rowjson[i] == '"') {
-    //                     std::cout << "Invalid json file. (wrong '\\' position)" << std::endl;
-    //                     std::exit(EXIT_FAILURE);
-    //                 }
-    //             } else {
-    //                 tmp += rowjson[i];
-    //             }
-    //             ++i;
-    //         }
-    //         ++i;
-    //         p = new jsonValue(tmp);
-    //         break;
-    //     } else if (rowjson[i] == 'f') {
-    //         i += 5;
-    //         p = new jsonValue(false);
-    //         break;
-    //     } else if (rowjson[i] == 'n') {
-    //         i += 4;
-    //         p = new jsonValue(nullptr);
-    //         break;
-    //     } else if (rowjson[i] == 't') {
-    //         i += 4;
-    //         p = new jsonValue(true);
-    //         break;
-    //     } else if (rowjson[i] == '-' || (rowjson[i] >= '0' && rowjson[i] <= '9')) {
-    //         std::string tmp = "";
-    //         int j = i;
-    //         while (rowjson[i] != ' ' && rowjson[i] != ',' 
-    //         && rowjson[i] != '\n' && rowjson[i] != '}') {
-    //             ++i;
-    //         }
-    //         tmp = rowjson.substr(j,i-j);
-    //         p = new jsonValue(std::stod(tmp));
-    //         break;
-    //     } else if (rowjson[i] == '{') {
-    //         p = sonnew jValue(new jsonNode());
-    //         // curNode = std::get<jsonNode*>(curNode->map[curKey]->value);
-    //         // AddNode();
-    //         BracketStack.push('}');
-    //         NodeStack.push(std::get<jsonNode*>(p->value));
-    //         ++i;
-    //         break;
-    //     }
-    // }
-    // return p;
 }
 
 void Json::Build() {
     int i = 0;
+    // while (BracketStack.empty()) {
+    //     if (rowjson[i] == ' ') {
+    //         ++i;
+    //     } else if (rowjson[i] == '\n') {
+    //         ++i;
+    //     } else if (rowjson[i] == '{') {
+    //         curNode = getObject(i);
+    //         root = curNode;
+    //     } 
+    // }
+    bool ifgetkey, ifgetvalue;//用于表示当前是读key还是读value
+    //因为存在两个都不读的情况，所以需要设置2个。
     while (i < rown) {
-        if (rowjson[i] == ' ') {
-            ++i;
-        } else if (rowjson[i] == '\n') {
-            ++i;
-        } else if (rowjson[i] == '{') {
-            curNode = getObject(i);
-            if (root == nullptr) {
-                root = curNode;
+        if (BracketStack.empty()) {
+            while (BracketStack.empty() && i < rown) {
+                if (rowjson[i] == ' ') {
+                    ++i;
+                } else if (rowjson[i] == '\n') {
+                    ++i;
+                } else if (rowjson[i] == '{') {
+                    curNode = getObject(i);
+                    root = curNode;
+                    ifgetkey = true;
+                    ifgetvalue = false;
+                }
             }
-            curKey = getNextKey(i);
-        } else if (rowjson[i] == ':') {
-            ++i;
-            jsonValue *p = getNextValue(i);
-            curNode->map[curKey] = p;
-            if (std::holds_alternative<jsonNode*>(p->value)) {
-                curNode = NodeStack.top();
-                curKey = getNextKey(i);
-            }
-        } else if (rowjson[i] == ',') {
-            ++i;
-            curKey = getNextKey(i);
-        } else if (rowjson[i] == '}') {
-            ++i;
-            BracketStack.pop();
-            NodeStack.pop();
-            if (NodeStack.empty()) {
-                curNode = nullptr;
-            } else {
-                curNode = NodeStack.top();
+        } else {
+            if (BracketStack.top() == '}') {//在Node里添加数据
+                if (ifgetkey) {
+                    curKey = getNextKey(i);
+                    ifgetkey = false;
+                }
+                if (ifgetvalue) {
+                    jsonValue *p = getNextValue(i);
+                    curNode->map[curKey] = p;
+                    ifgetvalue = false;
+                    if (std::holds_alternative<jsonNode*>(p->value)) {
+                        curNode = NodeStack.top();
+                        ifgetkey = true;
+                    } else if (std::holds_alternative<std::vector<Json::jsonValue*>*>(p->value)) {
+                        curArray = ArrayStack.top();
+                        ifgetvalue = true;
+                    }
+                    continue;
+                }
+                if (rowjson[i] == ' ') {
+                    ++i;
+                } else if (rowjson[i] == '\n') {
+                    ++i;
+                } else if (rowjson[i] == ',') {
+                    ++i;
+                    ifgetkey = true;
+                } else if (rowjson[i] == ':') {
+                    ++i; 
+                    ifgetvalue = true;
+                } else if (rowjson[i] == '}') {
+                    ++i;
+                    BracketStack.pop();
+                    NodeStack.pop();
+                    if (NodeStack.empty()) {
+                        curNode = nullptr;
+                    } else {
+                        curNode = NodeStack.top();
+                    }
+                }
+            } else if (BracketStack.top() == ']') {//在Array里添加数据
+                if (ifgetvalue) {
+                    jsonValue *p = getNextValue(i);
+                    curArray->push_back(p);
+                    // curNode->map[curKey] = p;
+                    ifgetvalue = false;
+                    if (std::holds_alternative<jsonNode*>(p->value)) {
+                        curNode = NodeStack.top();
+                        ifgetkey = true;
+                    } else if (std::holds_alternative<std::vector<Json::jsonValue*>*>(p->value)) {
+                        curArray = ArrayStack.top();
+                        ifgetvalue = true;
+                    }
+                    continue;
+                }
+                if (rowjson[i] == ' ') {
+                    ++i;
+                } else if (rowjson[i] == '\n') {
+                    ++i;
+                } else if (rowjson[i] == ',') {
+                    ++i;
+                    ifgetvalue = true;
+                } else if (rowjson[i] == ']') {
+                    ++i;
+                    BracketStack.pop();
+                    ArrayStack.pop();
+                    if (ArrayStack.empty()) {
+                        curArray = nullptr;
+                    } else {
+                        curArray = ArrayStack.top();
+                    }
+                }
             }
         }
     }
-
-    // bool readKey = false; //true-key, false-value;
-    // while (i < rown) {
-    //     if (!readKey && NodeStack.empty()) {
-    //         if (rowjson[i] == '{') {
-    //             readKey = true;
-    //             AddNode();
-    //             BracketStack.push('}');
-    //             NodeStack.push(curNode);
-    //         }
+    //     if (rowjson[i] == ' ') {
     //         ++i;
-    //     } else if (readKey) {
-    //         curKey = getNextKey(i);
-    //         readKey = false;
-    //     } else {
-    //         jsonValue* p = getNextValue(i);
-    //         readKey = true;
-    //         curNode->map[curKey] = p;
-    //         curNode = NodeStack.top();
-    //     }
-    // }
-    // //     if (rowjson[i] == ' ') {
-
     //     } else if (rowjson[i] == '\n') {
-
-    //     } else if (rowjson[i] == ':') {
-    //         readKey = false;
-    //     } else if (rowjson[i] == ',') {
-    //         readKey = true;
+    //         ++i;
     //     } else if (rowjson[i] == '{') {
-    //         if (readKey) {
-    //             std::cout << "Invalid json file. (wrong '{}' position)" << std::endl;
-    //             std::exit(EXIT_FAILURE);
+    //         curNode = getObject(i);
+    //         if (root == nullptr) {
+    //             root = curNode;
     //         }
-    //         readKey = true;
-    //         AddNode();
-    //         BracketStack.push('}');
-    //         NodeStack.push(curNode);
+    //         curKey = getNextKey(i);
+    //     } else if (rowjson[i] == ':') {
+    //         ++i;
+    //         jsonValue *p = getNextValue(i);
+    //         curNode->map[curKey] = p;
+    //         if (std::holds_alternative<jsonNode*>(p->value)) {
+    //             curNode = NodeStack.top();
+    //             curKey = getNextKey(i);
+    //         } else if (std::holds_alternative<std::vector<Json::jsonValue*>*>(p->value)) {
+
+    //         }
+    //     } else if (rowjson[i] == ',') {
+    //         ++i;
+    //         curKey = getNextKey(i);
     //     } else if (rowjson[i] == '}') {
-    //         if (BracketStack.empty() || BracketStack.top() != '}') {
-    //             std::cout << "Invalid json file. (More '}')" << std::endl;
-    //             std::exit(EXIT_FAILURE);
-    //         }
+    //         ++i;
     //         BracketStack.pop();
     //         NodeStack.pop();
     //         if (NodeStack.empty()) {
@@ -363,61 +350,7 @@ void Json::Build() {
     //         } else {
     //             curNode = NodeStack.top();
     //         }
-    //     } else if (rowjson[i] == '"') {
-    //         ++i;
-    //         std::string tmp = "";
-    //         int j = i;
-    //         while (rowjson[i] != '"') {
-    //             if (rowjson[i] == '\\') {
-    //                 ++i;
-    //                 if (rowjson[i] == 'n') {
-    //                     tmp += '\n';
-    //                 } else if (rowjson[i] == 't') {
-    //                     tmp += '\t';
-    //                 } else if (rowjson[i] == '\'') {
-    //                     tmp += '\'';
-    //                 } else if (rowjson[i] == '\\') {
-    //                     tmp += '\\';
-    //                 } else if (rowjson[i] == '"') {
-    //                     std::cout << "Invalid json file. (wrong '\\' position)" << std::endl;
-    //                     std::exit(EXIT_FAILURE);
-    //                 }
-    //             } else {
-    //                 tmp += rowjson[i];
-    //             }
-    //             ++i;
-    //         }
-    //         if (readKey) {
-    //             curKey = tmp;
-    //         } else {
-    //             curNode->map[curKey]= new jsonValue(tmp);
-    //             printString();
-    //         }
-    //     } else if (rowjson[i] == 'n') {
-    //         i += 4;
-    //         curNode->map[curKey] = new jsonValue(std::nullptr_t());
-    //     } else if (rowjson[i] == 'f') {
-    //         i += 5;
-    //         curNode->map[curKey] = new jsonValue(false);
-    //     } else if (rowjson[i] == 't') {
-    //         i += 4;
-    //         curNode->map[curKey] = new jsonValue(true);
-    //     } else if (rowjson[i] == '-' || (rowjson[i] >= '0' && rowjson[i] <= '9')) {
-    //         std::string tmp = "";
-    //         int j = i;
-    //         while (rowjson[i] != ' ' && rowjson[i] != ',' 
-    //         && rowjson[i] != '\n' && rowjson[i] != '}') {
-    //             ++i;
-    //         }
-    //         tmp = rowjson.substr(j,i-j);
-    //         --i;
-    //         curNode->map[curKey] = new jsonValue(std::stod(tmp));
-    //         printDouble();
-    //     } else if (rowjson[i] == '[') {
-    //         BracketStack.push(']');
-    //         curNode->map[curKey] = new jsonValue(std::vector<jsonValue*>());
     //     }
-    //     ++i;
     // }
     if (!BracketStack.empty()) {
         std::cout << "Invalid json file. (More '{')" << std::endl;
