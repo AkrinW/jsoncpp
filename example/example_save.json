@@ -1,0 +1,32 @@
+{
+	"title": "Design Patterns",
+	"subtitle": "Elements of Reusable Object-Oriented Software",
+	"author": [
+		[
+			3.000000
+		],
+		"Erich Gamma",
+		"Richard Helm",
+		"Ralph Johnson",
+		"John Vlissides",
+		true,
+		2232.000000,
+		null,
+		{
+			"adf": false,
+			"dc": 1.000000
+		},
+		{
+		},
+		[
+		]
+	],
+	"year": 2009.000000,
+	"weight": 1.800000,
+	"hardcover": true,
+	"publisher": {
+		"Company": "Pearson Education",
+		"Country": "India"
+	},
+	"website": null
+}

@@ -179,6 +179,8 @@ std::string Json::getNextKey(int &i) {
             break;
         } else if (rowjson[i] == '}') {
             break;
+        } else if (rowjson[i] == '\t') {
+            ++i;
         }
     }
     return tmp;
@@ -217,6 +219,8 @@ Json::jsonValue* Json::getNextValue(int &i) {
         } else if (rowjson[i] == ']') {
             p = nullptr;
             break;
+        } else if (rowjson[i] == '\t') {
+            ++i;
         }
     }
     return p;
@@ -249,6 +253,8 @@ void Json::Build() {
                     root = curNode;
                     ifgetkey = true;
                     ifgetvalue = false;
+                } else if (rowjson[i] == '\t') {
+                    ++i;
                 }
             }
         } else {
@@ -290,6 +296,8 @@ void Json::Build() {
                     } else {
                         curNode = NodeStack.top();
                     }
+                } else if (rowjson[i] == '\t') {
+                    ++i;
                 }
             } else if (BracketStack.top() == ']') {//在Array里添加数据
                 if (ifgetvalue) {
@@ -323,6 +331,8 @@ void Json::Build() {
                     } else {
                         curArray = ArrayStack.top();
                     }
+                } else if (rowjson[i] == '\t') {
+                    ++i;
                 }
             }
         }
@@ -478,17 +488,157 @@ void Json::printNode(jsonNode* node, int numoftab) {
     std::cout << '}';
 }
 
-void Json::printValue(jsonValue* value) {
-    const char* typeName = std::visit(VariantTypeGetter{}, value->value);
-    std::cout << "The type of variant is: " << typeName << std::endl;
+// void Json::printValue(jsonValue* value) {
+//     const char* typeName = std::visit(VariantTypeGetter{}, value->value);
+//     std::cout << "The type of variant is: " << typeName << std::endl;
 
-}
+// }
 
-void Json::printJson() {
+void Json::PrintJson() {
     if (root == nullptr) {
         return;
     }
     printNode(root,0);
+}
+
+std::string Json::SaveAsString() {
+    std::string tmp = "";
+    if (root == nullptr) {
+        return tmp;
+    }
+    tmp = NodetoString(root, 0);
+    return tmp;
+}
+
+std::string Json::NodetoString(jsonNode* node, int numoftab) {
+    std::string tmp = "";
+    tmp += "{\n";
+    int nums = node->map.size();
+    if (nums == 0) {//节点为空
+        for (int i = 0; i < numoftab; ++i) {
+            tmp += '\t';
+        }
+        tmp += '}';
+        return tmp;     
+    }
+    for (auto u : node->list) {
+        for (int i = 0; i <= numoftab; ++i) {
+            tmp += '\t';
+        }
+        tmp = tmp + '"' + u + "\": ";
+        std::string typeName = std::visit(VariantTypeGetter{}, node->map[u]->value);
+        if (typeName == "Dn") {
+            tmp += NulltoString(node->map[u]);
+        } else if (typeName == "b") {
+            tmp += BooltoString(node->map[u]);
+        } else if (typeName == "d") {
+            tmp += DoubletoString(node->map[u]);
+        } else if (typeName == "NSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE") {
+            tmp += StringtoString(node->map[u]);;
+        } else if (typeName == "PN4JSON4Json8jsonNodeE") {
+            jsonNode *p = std::get<jsonNode*>(node->map[u]->value);
+            tmp += NodetoString(p, numoftab+1);
+        } else if (typeName == "PSt6vectorIPN4JSON4Json9jsonValueESaIS3_EE") {
+            tmp += ArraytoString(node->map[u], numoftab+1);
+        } else {
+            tmp = tmp + "The type of variant is: " + typeName + '\n';
+        }
+        if (u != node->list.back()) {
+            tmp += ',';
+        }
+        tmp += '\n';
+    }
+    for (int i = 0; i < numoftab; ++i) {
+        tmp += '\t';
+    }
+    tmp += '}';
+    return tmp;   
+}
+
+std::string Json::BooltoString(jsonValue* value) {
+    bool tmp = std::get<bool>(value->value);
+    std::string s = "";
+    if (tmp) {
+        s += "true";
+    } else {
+        s += "false";
+    }
+    return s;
+}
+
+std::string Json::DoubletoString(jsonValue* value) {
+    double tmp = std::get<double>(value->value);
+    std::string s = "";
+    s += std::to_string(tmp);
+    return s;
+}
+
+std::string Json::StringtoString(jsonValue* value) {
+    std::string tmp = std::get<std::string>(value->value);
+    tmp =  '"' + tmp + '"';
+    return tmp;
+}
+
+std::string Json::NulltoString(jsonValue* value) {
+    std::nullptr_t tmp = std::get<std::nullptr_t>(value->value);
+    std::string s = "";
+    s += "null";
+    return s;
+}
+
+std::string Json::ArraytoString(jsonValue* value, int numoftab) {
+    std::vector<jsonValue*>* p = std::get<std::vector<jsonValue*>*>(value->value);
+    int n = p->size();
+    std::string s = "";
+    s += "[\n";
+    if (n == 0) {//节点为空
+        for (int i = 0; i < numoftab; ++i) {
+            s += '\t';
+        }
+        s += ']';
+        return s;     
+    }
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j <= numoftab; ++j) {
+            s += '\t';
+        }
+        jsonValue* tmp = p[0][i];
+        std::string typeName = std::visit(VariantTypeGetter{}, tmp->value);
+        if (typeName == "Dn") {
+            s += NulltoString(tmp);
+        } else if (typeName == "b") {
+            s += BooltoString(tmp);
+        } else if (typeName == "d") {
+            s += DoubletoString(tmp);
+        } else if (typeName == "NSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE") {
+            s += StringtoString(tmp);
+        } else if (typeName == "PN4JSON4Json8jsonNodeE") {
+            jsonNode *nextnode = std::get<jsonNode*>(tmp->value);
+            s += NodetoString(nextnode, numoftab+1);
+        } else if (typeName == "PSt6vectorIPN4JSON4Json9jsonValueESaIS3_EE") {
+            s += ArraytoString(tmp, numoftab+1);
+        } else {
+            s = s + "The type of variant is: " + typeName + '\n';
+        }
+        if (i != n-1) {
+            s += ',';
+        }
+        s += '\n';
+    }
+    for (int i = 0; i < numoftab; ++i) {
+        s += '\t';
+    }
+    s += ']';
+    return s;
+}
+
+void Json::SaveFile(std::string filename) {
+    std::string completeString = SaveAsString();
+    std::ofstream outFile(filename);
+    if (outFile.is_open()) {
+        outFile << completeString;
+        outFile.close();
+    }
 }
 
 }

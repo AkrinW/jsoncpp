@@ -54,8 +54,9 @@ private:
     void printNull(jsonValue* value);
     void printNode(jsonNode* node, int i);
     void printArray(jsonValue* node, int i);
-    void printValue(jsonValue* value);
-    bool IfValid(std::string json);
+    // void printValue(jsonValue* value);
+
+    bool IfValid(std::string json);//解析json文件是否合法
 
     // 解析字符类型
     std::string getNextKey(int &i);
@@ -67,15 +68,23 @@ private:
     jsonNode* getObject(int &i);
     std::vector<jsonValue*>* getArray(int &i);
 
+    std::string SaveAsString();
+    std::string BooltoString(jsonValue* value);
+    std::string DoubletoString(jsonValue* value);
+    std::string StringtoString(jsonValue* value);
+    std::string NulltoString(jsonValue* value);
+    std::string NodetoString(jsonNode* node, int i);
+    std::string ArraytoString(jsonValue* node, int i);
 public:
     Json();
     ~Json();
     void ReadFile(std::string filename);
+    void SaveFile(std::string filename);
     void PrintRowjson();
     void AddToMap();
     void AddNode();
     void Build();
-    void printJson();
+    void PrintJson();
 };
 
 } // namespace json
