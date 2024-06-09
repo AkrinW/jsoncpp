@@ -8,7 +8,7 @@
 namespace JSON{
 
 //获取variant类型
-struct VariantTypeGetter {
+struct Json::VariantTypeGetter {
     template <typename T>
     const char* operator()(T&&) const {
         return typeid(T).name();
@@ -31,6 +31,7 @@ struct Json::jsonValue {
 
 struct Json::jsonNode {
     std::unordered_map<std::string, jsonValue*> map;
+    std::list<std::string> list;
     // std::unordered_map<std::string, jsonValue> map;
 };
 
@@ -254,6 +255,7 @@ void Json::Build() {
             if (BracketStack.top() == '}') {//在Node里添加数据
                 if (ifgetkey) {
                     curKey = getNextKey(i);
+                    curNode->list.push_back(curKey);
                     ifgetkey = false;
                 }
                 if (ifgetvalue) {
@@ -365,20 +367,128 @@ void Json::Build() {
     }
 }
 
-void Json::printBool() {
-    bool tmp = std::get<bool>(curNode->map[curKey]->value);
+void Json::printBool(jsonValue* value) {
+    bool tmp = std::get<bool>(value->value);
+    if (tmp) {
+        std::cout << "true";
+    } else {
+        std::cout << "false";
+    }
+}
+
+void Json::printDouble(jsonValue* value) {
+    double tmp = std::get<double>(value->value);
     std::cout << tmp;
 }
 
-void Json::printDouble() {
-    double tmp = std::get<double>(curNode->map[curKey]->value);
-    std::cout << tmp;
+void Json::printString(jsonValue* value) {
+    std::string tmp = std::get<std::string>(value->value);
+    std::cout << '"' << tmp << '"';
 }
 
-void Json::printString() {
-    std::string tmp = std::get<std::string>(curNode->map[curKey]->value);
-    std::cout << tmp;
+void Json::printNull(jsonValue* value) {
+    std::nullptr_t tmp = std::get<std::nullptr_t>(value->value);
+    std::cout << "null";
 }
 
+void Json::printArray(jsonValue* value, int numoftab) {
+    std::vector<jsonValue*>* p = std::get<std::vector<jsonValue*>*>(value->value);
+    int n = p->size();
+    std::cout << "[\n";
+    if (n == 0) {//节点为空
+        for (int i = 0; i < numoftab; ++i) {
+            std::cout << '\t';
+        }
+        std::cout << ']';
+        return;     
+    }
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j <= numoftab; ++j) {
+            std::cout << '\t';
+        }
+        jsonValue* tmp = p[0][i];
+        std::string typeName = std::visit(VariantTypeGetter{}, tmp->value);
+        if (typeName == "Dn") {
+            printNull(tmp);
+        } else if (typeName == "b") {
+            printBool(tmp);
+        } else if (typeName == "d") {
+            printDouble(tmp);
+        } else if (typeName == "NSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE") {
+            printString(tmp);
+        } else if (typeName == "PN4JSON4Json8jsonNodeE") {
+            jsonNode *nextnode = std::get<jsonNode*>(tmp->value);
+            printNode(nextnode, numoftab+1);
+        } else if (typeName == "PSt6vectorIPN4JSON4Json9jsonValueESaIS3_EE") {
+            printArray(tmp, numoftab+1);
+        } else {
+            std::cout << "The type of variant is: " << typeName << std::endl;
+        }
+        if (i != n-1) {
+            std::cout << ',';
+        }
+        std::cout << '\n';
+    }
+    for (int i = 0; i < numoftab; ++i) {
+        std::cout << '\t';
+    }
+    std::cout << ']';
+}
+
+void Json::printNode(jsonNode* node, int numoftab) {
+    std::cout << "{\n";
+    int nums = node->map.size();
+    if (nums == 0) {//节点为空
+        for (int i = 0; i < numoftab; ++i) {
+            std::cout << '\t';
+        }
+        std::cout << '}';
+        return;     
+    }
+    for (auto u : node->list) {
+        for (int i = 0; i <= numoftab; ++i) {
+            std::cout << '\t';
+        }
+        std::cout << '"' << u << "\": ";
+        std::string typeName = std::visit(VariantTypeGetter{}, node->map[u]->value);
+        if (typeName == "Dn") {
+            printNull(node->map[u]);
+        } else if (typeName == "b") {
+            printBool(node->map[u]);
+        } else if (typeName == "d") {
+            printDouble(node->map[u]);
+        } else if (typeName == "NSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE") {
+            printString(node->map[u]);
+        } else if (typeName == "PN4JSON4Json8jsonNodeE") {
+            jsonNode *p = std::get<jsonNode*>(node->map[u]->value);
+            printNode(p, numoftab+1);
+        } else if (typeName == "PSt6vectorIPN4JSON4Json9jsonValueESaIS3_EE") {
+            printArray(node->map[u], numoftab+1);
+        } else {
+            std::cout << "The type of variant is: " << typeName << std::endl;
+        }
+        if (u != node->list.back()) {
+            std::cout << ',';
+        }
+        std::cout << '\n';
+    }
+    for (int i = 0; i < numoftab; ++i) {
+        std::cout << '\t';
+    }
+    std::cout << '}';
+}
+
+void Json::printValue(jsonValue* value) {
+    const char* typeName = std::visit(VariantTypeGetter{}, value->value);
+    std::cout << "The type of variant is: " << typeName << std::endl;
+
+}
+
+void Json::printJson() {
+    if (root == nullptr) {
+        return;
+    }
+    printNode(root,0);
+}
 
 }

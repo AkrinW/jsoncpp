@@ -26,6 +26,7 @@ private:
     struct jsonValue;
     using Valuetype = std::variant<std::nullptr_t, std::string, bool, 
                             double, jsonNode*>;
+    struct VariantTypeGetter;
 
     // using jsonArrayValue = std::variant<std::nullptr_t, bool, 
     //                         double, std::string, jsonNode*>;
@@ -46,9 +47,14 @@ private:
     std::stack<std::vector<jsonValue*>*> ArrayStack;//数组栈，用于读取当前数组。
     
     void InitNode();
-    void printBool();
-    void printDouble();
-    void printString();
+
+    void printBool(jsonValue* value);
+    void printDouble(jsonValue* value);
+    void printString(jsonValue* value);
+    void printNull(jsonValue* value);
+    void printNode(jsonNode* node, int i);
+    void printArray(jsonValue* node, int i);
+    void printValue(jsonValue* value);
     bool IfValid(std::string json);
 
     // 解析字符类型
@@ -69,6 +75,7 @@ public:
     void AddToMap();
     void AddNode();
     void Build();
+    void printJson();
 };
 
 } // namespace json

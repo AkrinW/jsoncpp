@@ -12,7 +12,7 @@ int main() {
     json.PrintRowjson();
     json.AddToMap();
     json.Build();
-
+    json.printJson();
     return 0;
 }
 //example/example.json
