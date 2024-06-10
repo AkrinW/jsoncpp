@@ -27,6 +27,7 @@ struct Json::jsonValue {
     jsonValue(double d): value(d){}
     jsonValue(jsonNode* n): value(n){}
     jsonValue(std::vector<jsonValue*>* v): value(v) {}
+    ~jsonValue();
 };
 
 struct Json::jsonNode {
@@ -34,7 +35,43 @@ struct Json::jsonNode {
     std::list<std::string> list;
     std::unordered_map<std::string, jsonType> typemap;
     // std::unordered_map<std::string, jsonValue> map;
+    ~jsonNode();
 };
+
+Json::jsonValue::~jsonValue() {
+    if (std::holds_alternative<jsonNode*>(value)) {
+        jsonNode *n = std::get<jsonNode*>(value);
+        delete n;
+    } else if (std::holds_alternative<std::vector<Json::jsonValue*>*>(value)) {
+        std::vector<Json::jsonValue*>* v = std::get<std::vector<Json::jsonValue*>*>(value);
+        int n = v->size();
+        for (int i = 0; i < n; ++i) {
+            delete v[0][i];
+        }
+        v->clear();
+        delete v;
+    } else if (std::holds_alternative<std::nullptr_t>(value)) {
+
+    } else if (std::holds_alternative<double>(value)) {
+
+    } else if (std::holds_alternative<std::string>(value)) {
+
+    } else if (std::holds_alternative<bool>(value)) {
+
+    } else {
+        std::cout << "wrong type";
+    }
+    value = nullptr;
+}
+
+Json::jsonNode::~jsonNode() {
+    list.clear();
+    typemap.clear();
+    for (auto u : map) {
+        delete u.second;
+    }
+    map.clear();
+}
 
 Json::Json() {
     rowjson = "";
@@ -45,7 +82,7 @@ Json::Json() {
 
 Json::~Json() {
     delete root;
-    delete curNode;
+    // delete curNode;
 }
 
 void Json::ReadFile(std::string filename) {
@@ -743,5 +780,78 @@ void Json::ShowArrayKeys(std::vector<jsonValue*>* nextarray, int numoftab, std::
         }
     }
 }
+
+// 删除key,需要输入完整的路径名字 root.publisher.Country
+void Json::DeleteKey(std::string Keyname) {
+    std::string head = Keyname.substr(0,4);
+    if (head != "root") {
+        std::cout << "wrong keyname\n";
+        return;
+    }
+    int n = head.size();
+    head = Keyname.substr(5, n-5);
+    DeleteKeyInNode(head, root);
+}
+
+// 删除结点内的key，如果是中间层，还需要迭代删除。
+void Json::DeleteKeyInNode(std::string Keyname, jsonNode *p) {
+    std::string name = "";
+    int i = 0, n = Keyname.size();
+    while (i < n && Keyname[i] != '.' && Keyname[i] != '[') {
+        ++i;
+    }
+    name = Keyname.substr(0,i);
+    if (!p->map.count(name)) {
+        std::cout << "no keyname\n";
+        return;
+    }
+    if (i == n) {
+        delete p->map[name];
+        p->map.erase(name);
+        p->typemap.erase(name);
+        p->list.remove(name);
+    } else if (Keyname[i] == '.') {
+        if (p->typemap[name] != _OBJECT) {
+            std::cout << "keynamewrong,no such object\n";
+            return;
+        }
+        jsonNode *nextnode = std::get<jsonNode*>(p->map[name]->value);
+        name = Keyname.substr(i+1,n-i-1);
+        DeleteKeyInNode(name, nextnode);
+    } else if (Keyname[i] == '[') {
+        ++i;
+        int j = i;
+        while (Keyname[i] != ']') {
+            ++i;
+        }
+        int sub = std::stoi(Keyname.substr(j,i-j));
+        std::vector<jsonValue*>* nextarray = std::get<std::vector<jsonValue*>*>(p->map[name]->value);
+        jsonNode *nextnode = std::get<jsonNode*>(nextarray[0][i]->value);
+        name = Keyname.substr(i+2,n-i-2);
+        DeleteKeyInNode(name, nextnode);
+    } else {
+        std::cout << "wrong keyname\n";
+        return;
+    }
+}
+
+//删除结点值，根据它的类型删除。
+// void Json::DeleteJsonValue(jsonValue *v, jsonType t) {
+//     if (t == _ARRAY) {
+//         std::vector<jsonValue*>* array = std::get<std::vector<jsonValue*>*>(v->value);
+//         int n = array->size();
+//         for (int i = 0; i < n; ++i) {
+//             DeleteJsonValueInArray(array[0][i]);
+//         }
+//         array[0].erase(array[0].begin(),array[0].end());
+//         delete array;
+//     } else if (t == _OBJECT) {
+
+//     }
+
+//     v->value = nullptr;
+//     delete v;
+// }
+
 
 }

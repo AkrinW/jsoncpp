@@ -80,6 +80,10 @@ private:
     void ShowNodeKeys(jsonNode* p, int numoftab, std::string name);
     void ShowArrayKeys(std::vector<jsonValue*>* a, int numoftab, std::string name);
     std::string ShowJsonType(jsonType type);
+
+    void DeleteKeyInNode(std::string keyname, jsonNode *p);
+    // void DeleteJsonValue(jsonValue *v, jsonType t);
+    // void DeleteJsonValueInArray(jsonValue *v);
 public:
     Json();
     ~Json();
@@ -91,6 +95,7 @@ public:
     void Build();
     void PrintJson();
     void ShowKeys();
+    void DeleteKey(std::string keyname);
 };
 
 } // namespace json
