@@ -54,7 +54,8 @@ private:
     void printNull(jsonValue* value);
     void printNode(jsonNode* node, int i);
     void printArray(jsonValue* node, int i);
-    // void printValue(jsonValue* value);
+    void printValue(jsonValue* value);
+    void printValue(jsonValue* value, jsonType t);
 
     bool IfValid(std::string json);//解析json文件是否合法
 
@@ -84,6 +85,8 @@ private:
     void DeleteKeyInNode(std::string keyname, jsonNode *p);
     // void DeleteJsonValue(jsonValue *v, jsonType t);
     // void DeleteJsonValueInArray(jsonValue *v);
+    void SearchKeyInNode(std::string keyname, jsonNode *p);
+    
 public:
     Json();
     ~Json();
@@ -96,6 +99,7 @@ public:
     void PrintJson();
     void ShowKeys();
     void DeleteKey(std::string keyname);
+    void SearchKey(std::string keyname);
 };
 
 } // namespace json

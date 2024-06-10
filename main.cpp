@@ -18,9 +18,12 @@ int main() {
     // std::string savefilename;
     // std::cin >> savefilename;
     // json.SaveFile(savefilename);
-    json.DeleteKey("root.author[8].dc");
-    json.DeleteKey("root.publisher.Country");
-    json.ShowKeys();
+    // json.DeleteKey("root.author[5]");
+    // json.DeleteKey("root.publisher.Country");
+    // json.PrintJson();
+    // json.ShowKeys();
+    json.SearchKey("root.author");
+    json.SearchKey("root.publisher.Country");
     return 0;
 }
 //example/example.json

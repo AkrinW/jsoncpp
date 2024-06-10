@@ -113,9 +113,9 @@ void Json::AddToMap() {
         }
         ++map[u];
     }
-    for (auto u : list) {
-        std::cout << u << ' ' << map[u] << std::endl;
-    }
+    // for (auto u : list) {
+    //     std::cout << u << ' ' << map[u] << std::endl;
+    // }
 }
 
 void Json::InitNode() {
@@ -563,11 +563,45 @@ void Json::printNode(jsonNode* node, int numoftab) {
     std::cout << '}';
 }
 
-// void Json::printValue(jsonValue* value) {
-//     const char* typeName = std::visit(VariantTypeGetter{}, value->value);
-//     std::cout << "The type of variant is: " << typeName << std::endl;
+//用来打印数组里的值情况，因为没有map记录类型所以需要自己判断。
+void Json::printValue(jsonValue* value) {
+    const char* typeName = std::visit(VariantTypeGetter{}, value->value);
+    if (typeName == "Dn") {
+        printNull(value);
+    } else if (typeName == "b") {
+        printBool(value);
+    } else if (typeName == "d") {
+        printDouble(value);
+    } else if (typeName == "NSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE") {
+        printString(value);
+    } else if (typeName == "PN4JSON4Json8jsonNodeE") {
+        jsonNode *p = std::get<jsonNode*>(value->value);
+        printNode(p, 0);
+    } else if (typeName == "PSt6vectorIPN4JSON4Json9jsonValueESaIS3_EE") {
+        printArray(value, 0);
+    } else {
+        std::cout << "The type of variant is: " << typeName << std::endl;
+    }
+}
 
-// }
+//打印结点内的值情况，有typemap，传入类型参数。
+void Json::printValue(jsonValue* value, jsonType t) {
+    if (t == _NULL) {
+        printNull(value);
+    } else if (t == _NUMBER) {
+        printDouble(value);
+    } else if (t == _BOOLEAN) {
+        printBool(value);
+    } else if (t == _STRING) {
+        printString(value);
+    } else if (t == _OBJECT) {
+        printNode(std::get<jsonNode*>(value->value),0);
+    } else if (t == _ARRAY) {
+        printArray(value, 0);
+    } else {
+        std::cout << "wrong type";
+    }
+}
 
 void Json::PrintJson() {
     if (root == nullptr) {
@@ -826,9 +860,14 @@ void Json::DeleteKeyInNode(std::string Keyname, jsonNode *p) {
         }
         int sub = std::stoi(Keyname.substr(j,i-j));
         std::vector<jsonValue*>* nextarray = std::get<std::vector<jsonValue*>*>(p->map[name]->value);
-        jsonNode *nextnode = std::get<jsonNode*>(nextarray[0][i]->value);
-        name = Keyname.substr(i+2,n-i-2);
-        DeleteKeyInNode(name, nextnode);
+        if (i == n-1) {//抵达末尾，删除数组中某一个元素
+            delete nextarray[0][sub];
+            nextarray->erase(nextarray->begin()+sub);
+        } else {
+            jsonNode *nextnode = std::get<jsonNode*>(nextarray[0][i]->value);
+            name = Keyname.substr(i+2,n-i-2);
+            DeleteKeyInNode(name, nextnode);            
+        }
     } else {
         std::cout << "wrong keyname\n";
         return;
@@ -853,5 +892,59 @@ void Json::DeleteKeyInNode(std::string Keyname, jsonNode *p) {
 //     delete v;
 // }
 
+// 查找Key对应的值，并且将对应的value输出
+void Json::SearchKey(std::string Keyname) {
+    std::string head = Keyname.substr(0,4);
+    if (head != "root") {
+        std::cout << "wrong keyname\n";
+        return;
+    }
+    int n = head.size();
+    head = Keyname.substr(5, n-5);
+    std::cout << Keyname << ": ";
+    SearchKeyInNode(head, root);
+    std::cout << '\n';
+}
 
+void Json::SearchKeyInNode(std::string Keyname, jsonNode *p) {
+    std::string name = "";
+    int i = 0, n = Keyname.size();
+    while (i < n && Keyname[i] != '.' && Keyname[i] != '[') {
+        ++i;
+    }
+    name = Keyname.substr(0,i);
+    if (!p->map.count(name)) {
+        std::cout << "no keyname\n";
+        return;
+    }
+    if (i == n) {
+        printValue(p->map[name],p->typemap[name]);
+    } else if (Keyname[i] == '.') {
+        if (p->typemap[name] != _OBJECT) {
+            std::cout << "keynamewrong,no such object\n";
+            return;
+        }
+        jsonNode *nextnode = std::get<jsonNode*>(p->map[name]->value);
+        name = Keyname.substr(i+1,n-i-1);
+        SearchKeyInNode(name, nextnode);
+    } else if (Keyname[i] == '[') {
+        ++i;
+        int j = i;
+        while (Keyname[i] != ']') {
+            ++i;
+        }
+        int sub = std::stoi(Keyname.substr(j,i-j));
+        std::vector<jsonValue*>* nextarray = std::get<std::vector<jsonValue*>*>(p->map[name]->value);
+        if (i == n-1) {//抵达末尾。需要输出ARRAY中的某一个值
+            printValue(nextarray[0][sub]);
+        } else {
+            jsonNode *nextnode = std::get<jsonNode*>(nextarray[0][i]->value);
+            name = Keyname.substr(i+2,n-i-2);
+            SearchKeyInNode(name, nextnode);    
+        }
+    } else {
+        std::cout << "wrong keyname\n";
+        return;
+    }
+}
 }
