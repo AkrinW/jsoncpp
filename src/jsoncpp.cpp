@@ -32,6 +32,7 @@ struct Json::jsonValue {
 struct Json::jsonNode {
     std::unordered_map<std::string, jsonValue*> map;
     std::list<std::string> list;
+    std::unordered_map<std::string, jsonType> typemap;
     // std::unordered_map<std::string, jsonValue> map;
 };
 
@@ -84,6 +85,7 @@ void Json::InitNode() {
     root = new jsonNode();
 }
 
+//no use now.
 void Json::AddNode() {
     if (root == nullptr) {
         InitNode();
@@ -95,6 +97,7 @@ void Json::AddNode() {
     }
 }
 
+//getsometing() only used by build() with rowjson.
 std::string Json::getString(int &i) {
     std::string tmp = "";
     ++i;
@@ -227,6 +230,26 @@ Json::jsonValue* Json::getNextValue(int &i) {
 
 }
 
+jsonType Json::getValueType(jsonValue *p) {
+    jsonType tmp;
+    if (std::holds_alternative<jsonNode*>(p->value)) {
+        tmp = _OBJECT;
+    } else if (std::holds_alternative<std::vector<Json::jsonValue*>*>(p->value)) {
+        tmp = _ARRAY;
+    } else if (std::holds_alternative<std::nullptr_t>(p->value)) {
+        tmp = _NULL;
+    } else if (std::holds_alternative<double>(p->value)) {
+        tmp = _NUMBER;
+    } else if (std::holds_alternative<std::string>(p->value)) {
+        tmp = _STRING;
+    } else if (std::holds_alternative<bool>(p->value)) {
+        tmp = _BOOLEAN;
+    } else {
+        std::cout << "wrong type";
+    }
+    return tmp;
+}
+
 void Json::Build() {
     int i = 0;
     // while (BracketStack.empty()) {
@@ -261,17 +284,31 @@ void Json::Build() {
             if (BracketStack.top() == '}') {//在Node里添加数据
                 if (ifgetkey) {
                     curKey = getNextKey(i);
+                    if (curKey == "") {
+                        ++i;
+                        BracketStack.pop();
+                        NodeStack.pop();
+                        if (NodeStack.empty()) {
+                            curNode = nullptr;
+                        } else {
+                            curNode = NodeStack.top();
+                        }
+                        ifgetkey = false;
+                        continue;
+                    }
                     curNode->list.push_back(curKey);
                     ifgetkey = false;
                 }
                 if (ifgetvalue) {
                     jsonValue *p = getNextValue(i);
                     curNode->map[curKey] = p;
+                    jsonType _tmptype = getValueType(p);
+                    curNode->typemap[curKey] = _tmptype;
                     ifgetvalue = false;
-                    if (std::holds_alternative<jsonNode*>(p->value)) {
+                    if (_tmptype == _OBJECT) {
                         curNode = NodeStack.top();
                         ifgetkey = true;
-                    } else if (std::holds_alternative<std::vector<Json::jsonValue*>*>(p->value)) {
+                    } else if (_tmptype == _ARRAY) {
                         curArray = ArrayStack.top();
                         ifgetvalue = true;
                     }
@@ -305,10 +342,11 @@ void Json::Build() {
                     ifgetvalue = false;
                     if (p != nullptr) {
                         curArray->push_back(p);
-                        if (std::holds_alternative<jsonNode*>(p->value)) {
+                        jsonType _tmptype = getValueType(p);
+                        if (_tmptype == _OBJECT) {
                             curNode = NodeStack.top();
                             ifgetkey = true;
-                        } else if (std::holds_alternative<std::vector<Json::jsonValue*>*>(p->value)) {
+                        } else if (_tmptype == _ARRAY) {
                             curArray = ArrayStack.top();
                             ifgetvalue = true;
                         }
@@ -499,6 +537,7 @@ void Json::PrintJson() {
         return;
     }
     printNode(root,0);
+    std::cout << '\n';
 }
 
 std::string Json::SaveAsString() {
@@ -638,6 +677,70 @@ void Json::SaveFile(std::string filename) {
     if (outFile.is_open()) {
         outFile << completeString;
         outFile.close();
+    }
+}
+
+//显示Json数据中所有的Key值。递归查找，并且显示类型。
+void Json::ShowKeys() {
+    if (root == nullptr) {
+        std::cout << "no key";
+    }
+    ShowNodeKeys(root, 0, "root");
+}
+
+//把enum用string的形式显示
+std::string Json::ShowJsonType(jsonType type) {
+    std::string tmp = "";
+    if (type == _NULL) {
+        tmp = "NULL";
+    } else if (type == _NUMBER) {
+        tmp = "NUMBER";
+    } else if (type == _BOOLEAN) {
+        tmp = "BOOL";
+    } else if (type == _STRING) {
+        tmp = "STRING";
+    } else if (type == _OBJECT) {
+        tmp = "OBJECT";
+    } else if (type == _ARRAY) {
+        tmp = "ARRAY";
+    } else {
+        std::cout << "wrong type";
+    }
+    return tmp;
+}
+
+//显示Node结点中的所有Key值，需要输入参数和结点的名称，便于递归
+void Json::ShowNodeKeys(jsonNode *node, int numoftab, std::string name) {
+    for (auto u : node->list) {
+        for (int i = 0; i < numoftab; ++i) {
+            std::cout << '\t';
+        }
+        std::cout << name << '.' << u << ": " ;
+        std::cout << ShowJsonType(node->typemap[u]) << '\n';
+
+        if (node->typemap[u] == _OBJECT) {
+            jsonNode *nextnode = std::get<jsonNode*>(node->map[u]->value);
+            ShowNodeKeys(nextnode, numoftab+1, name+'.'+u);
+        } else if (node->typemap[u] == _ARRAY) {
+            std::vector<jsonValue*>* nextarray = std::get<std::vector<jsonValue*>*>(node->map[u]->value);
+            ShowArrayKeys(nextarray, numoftab+1, name+'.'+u);
+        }
+    }
+}
+
+//显示Array中所有key值，实际是遍历Array，如果发现有Object，就调用ShowNodeKeys()
+void Json::ShowArrayKeys(std::vector<jsonValue*>* nextarray, int numoftab, std::string name) {
+    int n = nextarray->size();
+    for (int i = 0; i < n; ++i) {
+        jsonValue* tmp = nextarray[0][i];
+        std::string typeName = std::visit(VariantTypeGetter{}, tmp->value);
+        if (typeName == "PN4JSON4Json8jsonNodeE") {
+            jsonNode *nextnode = std::get<jsonNode*>(tmp->value);
+            ShowNodeKeys(nextnode, numoftab, name+'['+std::to_string(i)+']');
+        } else if (typeName == "PSt6vectorIPN4JSON4Json9jsonValueESaIS3_EE") {
+            std::vector<jsonValue*>* nextarray = std::get<std::vector<jsonValue*>*>(tmp->value);
+            ShowArrayKeys(nextarray, numoftab, name+'['+std::to_string(i)+']');
+        }
     }
 }
 

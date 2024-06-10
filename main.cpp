@@ -13,10 +13,11 @@ int main() {
     json.AddToMap();
     json.Build();
     json.PrintJson();
-    std::cout << "输入保存文件名：";
-    std::string savefilename;
-    std::cin >> savefilename;
-    json.SaveFile(savefilename);
+    // std::cout << "输入保存文件名：";
+    // std::string savefilename;
+    // std::cin >> savefilename;
+    // json.SaveFile(savefilename);
+    json.ShowKeys();
     return 0;
 }
 //example/example.json

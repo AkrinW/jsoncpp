@@ -67,6 +67,7 @@ private:
     std::nullptr_t getNull(int &i);
     jsonNode* getObject(int &i);
     std::vector<jsonValue*>* getArray(int &i);
+    jsonType getValueType(jsonValue* p);
 
     std::string SaveAsString();
     std::string BooltoString(jsonValue* value);
@@ -75,6 +76,10 @@ private:
     std::string NulltoString(jsonValue* value);
     std::string NodetoString(jsonNode* node, int i);
     std::string ArraytoString(jsonValue* node, int i);
+
+    void ShowNodeKeys(jsonNode* p, int numoftab, std::string name);
+    void ShowArrayKeys(std::vector<jsonValue*>* a, int numoftab, std::string name);
+    std::string ShowJsonType(jsonType type);
 public:
     Json();
     ~Json();
@@ -85,6 +90,7 @@ public:
     void AddNode();
     void Build();
     void PrintJson();
+    void ShowKeys();
 };
 
 } // namespace json
