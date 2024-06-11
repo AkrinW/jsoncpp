@@ -53,56 +53,37 @@ json是一个树状结构，包括六种类型：
 
 关于json库，我要实现哪些功能？怎么实现？
 
-* 一个数据类，用于存储json的数据结构
-* 一个能够读取json文件的函数
-* 需要能够对json包含的键值增删改查
-* 需要有一个将json类导出为json文件的函数
+- [X] 一个数据类，用于存储json的数据结构
+- [X] 一个能够读取json文件的函数
+- [X] 需要能够对json包含的键值增删改查
+- [X] 需要有一个将json类导出为json文件的函数
+- [ ] 需要有一个json语法检查器
+
 构造函数和析构函数：
 
-已声明：json() 和 ~json()
-复制构造函数和赋值运算符：
+```cpp
+    // 构造函数与析构函数
+    Json();
+    ~Json();
+    // 文件读取与保存
+    void ReadFile(std::string filename);
+    void SaveFile(std::string filename);
+    void PrintRowjson();
+    // 解析，保存到Json类中数据结构
+    void Build(std::string s = "");
+    // 对存储数据增删改查
+    void PrintJson();
+    void ShowKeys();
+    void DeleteKey(std::string keyname);
+    void SearchKey(std::string keyname);
+    void InsertKey(std::string keyname, std::string value);
+    void RewriteKey(std::string keyname, std::string value);
 
-json(const json& other);
-json& operator=(const json& other);
-类型判断和获取函数：
+    数据访问函数，运算符重载。
+    ptr_jsonValue operator[](std::string key);
+```
 
-jsonType getType() const;
-bool isNull() const;
-bool isBoolean() const;
-bool isNumber() const;
-bool isString() const;
-bool isArray() const;
-bool isObject() const;
-
-数据访问函数：
-
-bool asBool() const;
-double asNumber() const;
-const std::string& asString() const;
-const json& operator[](size_t index) const; // 数组访问
-const json& operator[](const std::string& key) const; // 对象访问
-
-数据修改函数：
-
-void setBool(bool value);
-void setNumber(double value);
-void setString(const std::string& value);
-void setArray();
-void setObject();
-json& operator[](size_t index); // 数组访问
-json& operator[](const std::string& key); // 对象访问
-
-数组和对象的元素操作函数：
-
-void append(const json& value); // 数组追加元素
-void remove(size_t index); // 移除数组元素
-void remove(const std::string& key); // 移除对象键值对
-size_t size() const; // 返回数组或对象的大小
-
-序列化和反序列化函数：
-
-std::string serialize() const;
-static json deserialize(const std::string& jsonString);
+重载函数只实现了第一层，因为不知道怎么处理后续的重载符号了。
 
 测试驱动开发test-driven development, TDD
 
@@ -113,14 +94,3 @@ static json deserialize(const std::string& jsonString);
 5. 重构代码。
 6. 回到 1。
 
-
-
-为了避免在头文件中包含 `<memory>`，你可以使用前向声明和智能指针的特化声明，但不幸的是，标准库的智能指针类型（如 std::unique_ptr 和 std::shared_ptr）需要在头文件中包含 `<memory>`，因为模板实例化需要完整的类型定义。
-
-不过，可以通过将实现细节隐藏在实现文件中，尽量减少头文件的包含来优化依赖。
-
-一个更好的方案是使用一个私有实现类（Pimpl Idiom），这样可以完全隐藏实现细节，并减少头文件中的包含。这种设计模式称为 "Pimpl Idiom"（Pointer to Implementation Idiom）。
-
-测试框架 test framework  github：catch
-
-断言（assertion）是 C 语言中常用的防御式编程方式，减少编程错误。最常用的是在函数开始的地方，检测所有参数。有时候也可以在调用函数后，检查上下文是否正确。C 语言的标准库含有 assert() 这个宏（需 #include ），提供断言功能。当程序以 release 配置编译时（定义了 NDEBUG 宏），assert() 不会做检测；而当在 debug 配置时（没定义 NDEBUG 宏），则会在运行时检测 assert(cond) 中的条件是否为真（非 0），断言失败会直接令程序崩溃。

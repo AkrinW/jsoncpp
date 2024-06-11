@@ -37,14 +37,48 @@ struct Json::jsonValue {
     jsonValue(ptr_jsonNode n): value(n){}
     jsonValue(ptr_jsonArray v): value(v){}
     ~jsonValue();
+
+    Json::ptr_jsonValue operator[](int sub) {
+        if (std::holds_alternative<ptr_jsonArray>(value)) {
+            auto p = std::get<ptr_jsonArray>(value);
+            return p.get()->at(sub);
+        } else {
+            std::cout << "not a array";
+            return nullptr;
+        }
+    }
+
+    Json::ptr_jsonNode operator[](std::string key) {
+        if (std::holds_alternative<ptr_jsonNode>(value)) {
+            auto p = std::get<ptr_jsonNode>(value);
+            return p;   
+        } else {
+            std::cout << "not a node";
+        }
+        return nullptr;
+    }
+    // ptr_jsonValue operator[](int sub);
+    // ptr_jsonNode operator[](std::string key);
 };
 
+// JSON::Json::ptr_jsonValue JSON::Json::jsonValue::operator[](int sub);
+// JSON::Json::ptr_jsonNode JSON::Json::jsonValue::operator[](std::string key);
 struct Json::jsonNode {
     std::unordered_map<std::string, ptr_jsonValue> map;
     std::list<std::string> list;
     std::unordered_map<std::string, jsonType> typemap;
     // std::unordered_map<std::string, jsonValue> map;
     ~jsonNode();
+    Json::ptr_jsonValue operator[](std::string key) {
+        if (this == nullptr) {
+            std::cout << "no json node";
+        } else if (map.count(key)) {
+            return map[key];
+        } else {
+            std::cout << "no key name";
+        }
+        return nullptr;
+    }
 };
 
 Json::jsonValue::~jsonValue() {
@@ -1236,6 +1270,52 @@ void Json::RewriteKeyInNode(std::string Keyname, std::string value, ptr_jsonNode
         std::cout << "wrong keyname\n";
         return;
     }
+}
+
+Json::ptr_jsonValue Json::operator[](std::string key) {
+    if (root == nullptr) {
+        std::cout << "no json file";
+    } else if (root.get()->map.count(key)) {
+        return root.get()->map[key];
+    } else {
+        std::cout << "no key name";
+    }
+    return nullptr;
+}
+
+// Json::ptr_jsonValue Json::jsonValue::operator[](int sub) {
+//     if (std::holds_alternative<ptr_jsonArray>(value)) {
+//         auto p = std::get<ptr_jsonArray>(value);
+//         return p.get()->at(sub);
+//     } else {
+//         std::cout << "not a array";
+//         return nullptr;
+//     }
+// }
+
+// Json::ptr_jsonNode Json::jsonValue::operator[](std::string key) {
+//     if (std::holds_alternative<ptr_jsonNode>(value)) {
+//         auto p = std::get<ptr_jsonNode>(value);
+//         return p;   
+//     } else {
+//         std::cout << "not a node";
+//     }
+//     return nullptr;
+// }
+
+// Json::ptr_jsonValue Json::jsonNode::operator[](std::string key) {
+//     if (this == nullptr) {
+//         std::cout << "no json node";
+//     } else if (map.count(key)) {
+//         return map[key];
+//     } else {
+//         std::cout << "no key name";
+//     }
+//     return nullptr;
+// }
+
+void Json::PrintOneValue(ptr_jsonValue v) {
+    printValue(v);
 }
 
 }

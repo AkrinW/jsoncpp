@@ -9,10 +9,10 @@ int main() {
     std::cout << "输入文件名: ";
     std::cin >> filename;
     json.ReadFile(filename);
-    json.PrintRowjson();
+    // json.PrintRowjson();
     // json.AddToMap();
     json.Build();
-    json.PrintJson();
+    // json.PrintJson();
 
     // std::cout << "输入保存文件名：";
     // std::string savefilename;
@@ -24,9 +24,10 @@ int main() {
     // json.ShowKeys();
     // json.SearchKey("root.author");
     // json.SearchKey("root.publisher.Country");
-
+    
+    json.PrintOneValue(json["publisher"]);
     json.RewriteKey("root.publisher.Country","    {\n\"Company\":-10.92E-33,\n\"Country\": 3}");
-    json.PrintJson();
+    // json.PrintJson();
 
 
     std::cout << "输入保存文件名：";

@@ -21,7 +21,16 @@ enum jsonType {
     _OBJECT
 };
 
+// JSON::Json::ptr_jsonValue JSON::Json::jsonValue::operator[](int sub);
+// JSON::Json::ptr_jsonNode JSON::Json::jsonValue::operator[](std::string key);
+
 class Json {
+public:
+    // struct jsonNode;
+    // struct jsonValue;
+    // using ptr_jsonValue = std::shared_ptr<jsonValue>;
+    // using ptr_jsonNode = std::shared_ptr<jsonNode>;
+    // using ptr_jsonArray = std::shared_ptr<std::vector<ptr_jsonValue>>;
 private:
     struct jsonNode;
     struct jsonValue;
@@ -101,6 +110,9 @@ private:
     ptr_jsonValue StringtoValue(std::string s);
     void RewriteKeyInNode(std::string keyname, std::string value, ptr_jsonNode p);
 public:
+    // struct jsonNode;
+    // struct jsonValue;
+
     Json();
     ~Json();
     void ReadFile(std::string filename);
@@ -113,7 +125,14 @@ public:
     void SearchKey(std::string keyname);
     void InsertKey(std::string keyname, std::string value);
     void RewriteKey(std::string keyname, std::string value);
+    ptr_jsonValue operator[](std::string key);//访问node里的Value;
+    void PrintOneValue(ptr_jsonValue v);
 };
+
+
+// JSON::Json::ptr_jsonValue JSON::Json::jsonValue::operator[](int sub);
+// JSON::Json::ptr_jsonNode JSON::Json::jsonValue::operator[](std::string key);
+
 
 } // namespace json
 
