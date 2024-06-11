@@ -20,13 +20,19 @@ int main() {
     // json.SaveFile(savefilename);
     // json.DeleteKey("root.author[5]");
     // json.DeleteKey("root.publisher.Country");
-    json.PrintJson();
-    json.ShowKeys();
+    // json.PrintJson();
+    // json.ShowKeys();
     // json.SearchKey("root.author");
     // json.SearchKey("root.publisher.Country");
 
-    // json.InsertKey("root.publisher.Country","    {\n\"Company\":-10.92E-33,\n\"Country\": 3}");
-    // json.PrintJson();
+    json.InsertKey("root.publisher.Country","    {\n\"Company\":-10.92E-33,\n\"Country\": 3}");
+    json.PrintJson();
+
+
+    std::cout << "输入保存文件名：";
+    std::string savefilename;
+    std::cin >> savefilename;
+    json.SaveFile(savefilename);
     return 0;
 }
 //example/example.json

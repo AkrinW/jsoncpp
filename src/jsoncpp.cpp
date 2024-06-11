@@ -992,9 +992,9 @@ void Json::InsertKey(std::string Keyname, std::string value) {
 
 void Json::InsertKeyInNode(std::string Keyname, std::string value, ptr_jsonNode p) {
     std::string name = "";
-    ptr_jsonValue next;
-    ptr_jsonArray tmp;
-    ptr_jsonValue origin;
+    // ptr_jsonValue next;
+    // auto tmp = std::make_shared<std::vector<ptr_jsonValue>>();
+    // ptr_jsonValue origin;
     int i = 0, n = Keyname.size();
     while (i < n && Keyname[i] != '.' && Keyname[i] != '[') {
         ++i;
@@ -1005,13 +1005,14 @@ void Json::InsertKeyInNode(std::string Keyname, std::string value, ptr_jsonNode 
         return;
     }
     if (i == n) {
-        next = StringtoValue(value);
+        auto next = StringtoValue(value);
         if (p->map.count(name)) {//已有key,插入value后转换为数组
             //如果原有的value也是数组，那么会变成嵌套二维数组。
             //这么做是为了和直接插入到数组下标处区分。
             // std::vector<jsonValue*> tmp;
-            origin = p->map[name];
-            tmp.get()->push_back(origin);
+            auto tmp = std::make_shared<std::vector<ptr_jsonValue>>();
+            // auto origin = p->map[name];
+            tmp.get()->push_back(p->map[name]);
             tmp.get()->push_back(next);
             // tmp.push_back(origin);
             // tmp.push_back(next);
