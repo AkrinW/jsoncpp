@@ -99,6 +99,7 @@ private:
     void SearchKeyInNode(std::string keyname, ptr_jsonNode p);
     void InsertKeyInNode(std::string keyname, std::string value, ptr_jsonNode p);
     ptr_jsonValue StringtoValue(std::string s);
+    void RewriteKeyInNode(std::string keyname, std::string value, ptr_jsonNode p);
 public:
     Json();
     ~Json();
@@ -111,6 +112,7 @@ public:
     void DeleteKey(std::string keyname);
     void SearchKey(std::string keyname);
     void InsertKey(std::string keyname, std::string value);
+    void RewriteKey(std::string keyname, std::string value);
 };
 
 } // namespace json

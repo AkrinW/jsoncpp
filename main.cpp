@@ -25,7 +25,7 @@ int main() {
     // json.SearchKey("root.author");
     // json.SearchKey("root.publisher.Country");
 
-    json.InsertKey("root.publisher.Country","    {\n\"Company\":-10.92E-33,\n\"Country\": 3}");
+    json.RewriteKey("root.publisher.Country","    {\n\"Company\":-10.92E-33,\n\"Country\": 3}");
     json.PrintJson();
 
 

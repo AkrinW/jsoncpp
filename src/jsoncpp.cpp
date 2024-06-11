@@ -1181,4 +1181,61 @@ Json::ptr_jsonValue Json::StringtoValue(std::string s) {
     return returnvalue;
 }
 
+void Json::RewriteKey(std::string Keyname, std::string value) {
+    std::string head = Keyname.substr(0,4);
+    if (head != "root") {
+        std::cout << "wrong keyname\n";
+        return;
+    }
+    int n = head.size();
+    head = Keyname.substr(5, n-5);
+    RewriteKeyInNode(head, value, root);    
+}
+
+void Json::RewriteKeyInNode(std::string Keyname, std::string value, ptr_jsonNode p) {
+    std::string name = "";
+    int i = 0, n = Keyname.size();
+    while (i < n && Keyname[i] != '.' && Keyname[i] != '[') {
+        ++i;
+    }
+    name = Keyname.substr(0,i);
+    if (i != n && !p->map.count(name)) {
+        std::cout << "no keyname\n";
+        return;
+    }
+    if (i == n) {
+        auto next = StringtoValue(value);
+        p.get()->map[name] = next;
+    } else if (Keyname[i] == '.') {
+        if (p->typemap[name] != _OBJECT) {
+            std::cout << "keynamewrong,no such object\n";
+            return;
+        }
+        auto nextnode = std::get<ptr_jsonNode>(p->map[name]->value);
+        name = Keyname.substr(i+1,n-i-1);
+        RewriteKeyInNode(name, value, nextnode);
+    } else if (Keyname[i] == '[') {
+        ++i;
+        int j = i;
+        while (Keyname[i] != ']') {
+            ++i;
+        }
+        int sub = std::stoi(Keyname.substr(j,i-j));
+        auto nextarray = std::get<ptr_jsonArray>(p->map[name]->value);
+        if (i == n-1) {//抵达末尾。插入到ARRAY中的下标。
+            auto next = StringtoValue(value);
+            nextarray.get()->at(sub) = next;
+            // nextarray.get()->insert(nextarray.get()->begin()+sub, next);
+            // nextarray[0].insert(nextarray[0].begin()+sub, next);
+        } else {
+            auto nextnode = std::get<ptr_jsonNode>(nextarray.get()->at(sub)->value);
+            name = Keyname.substr(i+2,n-i-2);
+            RewriteKeyInNode(name, value, nextnode);    
+        }
+    } else {
+        std::cout << "wrong keyname\n";
+        return;
+    }
+}
+
 }
